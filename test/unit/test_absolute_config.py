@@ -62,7 +62,7 @@ def test_get_rpc_creds():
     assert creds.get('port') == 17778
 
 
--def test_slurp_config_file():
+def test_slurp_config_file():
     import tempfile
 
     absolute_config = """# basic settings

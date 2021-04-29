@@ -29,7 +29,7 @@ def test_absoluted():
 
     assert hasattr(absoluted, 'rpc_connection')
 
-    # Absolute testnet block 0 hash == 00000bafbc94add76cb75e2ec92894837288a481e5c005f6563d91623bf8bc2c
+    # Absolute testnet block 0 hash == 00000de52875a68d7bf6a5bb5ad1b89fd7df4d67a9603669327949923dc74d7e
     # test commands without arguments
     info = absoluted.rpc_command('getinfo')
     info_keys = [
