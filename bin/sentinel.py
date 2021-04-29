@@ -6,7 +6,7 @@ import init
 import config
 import misc
 from absoluted import AbsoluteDaemon
-from models import Superblock, Proposal, GovernanceObject, Watchdog
+from models import Superblock, Proposal, GovernanceObject
 from models import VoteSignals, VoteOutcomes, Transient
 import socket
 from misc import printdbg
@@ -24,40 +24,7 @@ def perform_absoluted_object_sync(absoluted):
     GovernanceObject.sync(absoluted)
 
 
-# delete old watchdog objects, create new when necessary
-def watchdog_check(absoluted):
-    printdbg("in watchdog_check")
 
-    # delete expired watchdogs
-    for wd in Watchdog.expired(absoluted):
-        printdbg("\tFound expired watchdog [%s], voting to delete" % wd.object_hash)
-        wd.vote(absoluted, VoteSignals.delete, VoteOutcomes.yes)
-
-    # now, get all the active ones...
-    active_wd = Watchdog.active(absoluted)
-    active_count = active_wd.count()
-
-    # none exist, submit a new one to the network
-    if 0 == active_count:
-        # create/submit one
-        printdbg("\tNo watchdogs exist... submitting new one.")
-        wd = Watchdog(created_at=int(time.time()))
-        wd.submit(absoluted)
-
-    else:
-        wd_list = sorted(active_wd, key=lambda wd: wd.object_hash)
-
-        # highest hash wins
-        winner = wd_list.pop()
-        printdbg("\tFound winning watchdog [%s], voting VALID" % winner.object_hash)
-        winner.vote(absoluted, VoteSignals.valid, VoteOutcomes.yes)
-
-        # if remaining Watchdogs exist in the list, vote delete
-        for wd in wd_list:
-            printdbg("\tFound losing watchdog [%s], voting DELETE" % wd.object_hash)
-            wd.vote(absoluted, VoteSignals.delete, VoteOutcomes.yes)
-
-    printdbg("leaving watchdog_check")
 
 
 def prune_expired_proposals(absoluted):
@@ -207,9 +174,7 @@ def main():
 
     if absoluted.has_sentinel_ping:
         sentinel_ping(absoluted)
-    else:
-        # delete old watchdog objects, create a new if necessary
-        watchdog_check(absoluted)
+
 
     # auto vote network objects as valid/invalid
     # check_object_validity(absoluted)
@@ -230,7 +195,7 @@ def signal_handler(signum, frame):
     sys.exit(1)
 
 
-def cleanup(mutex_key):
+def cleanup():
     Transient.delete(mutex_key)
 
 
@@ -241,21 +206,20 @@ def process_args():
                         action='store_true',
                         help='Bypass scheduler and sync/vote immediately',
                         dest='bypass')
-    option, args = parser.parse_known_args()
+    args = parser.parse_args()
     
+    return args
 
-    return option
 
 
-def entrypoint():
-    # ensure another instance of Sentinel pointing at the same config
-    # is not currently running
-    mutex_key = 'SENTINEL_RUNNING_' + config.absolute_conf
-    
-    atexit.register(cleanup, mutex_key)
+
+if __name__ == '__main__':
+    atexit.register(cleanup)
     signal.signal(signal.SIGINT, signal_handler)
 
     
+    # ensure another instance of Sentinel is not currently running
+    mutex_key = 'SENTINEL_RUNNING'
     # assume that all processes expire after 'timeout_seconds' seconds
     timeout_seconds = 90
 
@@ -269,7 +233,5 @@ def entrypoint():
     # locked to this instance -- perform main logic here
     main()
 
-    Transient.delete(mutex_key)
 
-if __name__ == '__main__':
-    entrypoint()
+    Transient.delete(mutex_key)

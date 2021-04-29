@@ -1,7 +1,7 @@
 """
     Set up defaults and read sentinel.conf
 """
-import argparse
+
 import sys
 import os
 from absolute_config import AbsoluteConfig
@@ -12,52 +12,22 @@ default_sentinel_config = os.path.normpath(
 sentinel_config_file = os.environ.get('SENTINEL_CONFIG', default_sentinel_config)
 sentinel_cfg = AbsoluteConfig.tokenize(sentinel_config_file)
 
-sentinel_version = "1.2.0"
+sentinel_version = "1.3.0"
 min_absoluted_proto_version_with_sentinel_ping = 70207
 
-def get_argparse():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--config', type=str, required=False)
-    parser.add_argument('--rpc-port', type=int, required=False)
-    parser.add_argument('--repair', action='store_true', default=False, required=False)
-    parser.add_argument('--sentinel', action='store_true', default=False, required=False)
-    return parser
 
-def get_args():
-    parser = get_argparse()
-
-    try:
-        args = parser.parse_args()
-    except:
-        # We are inside tests
-        parser.add_argument('folder')
-        args = parser.parse_args()
-
-    return args
 
 def get_absolute_conf():
-    args = get_args()
-
-    if args.config:
-        absolute_conf = args.config
+    if sys.platform == 'win32':
+        absolute_conf = os.path.join(os.getenv('APPDATA'), "\AbsoluteCore/absolute.conf")
     else:
-        absolute_conf = ''
-        absolute_conf = sentinel_cfg.get('absolute_conf', absolute_conf)
-        # print absolute_conf
-        if not absolute_conf:
-            home = os.environ.get('HOME')
-            if home is not None:
-                if sys.platform == 'darwin':
-                    absolute_conf = os.path.join(home, "Library/Application Support/AbsoluteCore/absolute.conf")
-                else:
-                    absolute_conf = os.path.join(home, ".absolutecore/absolute.conf")
-            else:
-                home = os.getenv('APPDATA')
-                if home is not None:
-                    absolute_conf = os.path.join(home, "AbsoluteCore\\absolute.conf")
-                else:
-                    absolute_conf = 'absolute.conf'
+        home = os.environ.get('HOME')
 
+        absolute_conf = os.path.join(home, ".absolutecore/absolute.conf")
+        if sys.platform == 'darwin':
+            absolute_conf = os.path.join(home, "Library/Application Support/AbsoluteCore/absolute.conf")
+
+    absolute_conf = sentinel_cfg.get('absolute_conf', absolute_conf)
 
     return absolute_conf
 
@@ -66,6 +36,8 @@ def get_network():
     return sentinel_cfg.get('network', 'mainnet')
 
 
+def get_rpchost():
+    return sentinel_cfg.get('rpchost', '127.0.0.1')
 def sqlite_test_db_name(sqlite_file_path):
     (root, ext) = os.path.splitext(sqlite_file_path)
     test_sqlite_file_path = root + '_test' + ext

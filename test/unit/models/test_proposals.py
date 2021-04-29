@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import pytest
 import sys
 import os
@@ -127,6 +128,26 @@ def test_proposal_is_valid(proposal):
     proposal.name = 'R66-Y'
     assert proposal.is_valid() is True
 
+    proposal.name = 'valid-name'
+    assert proposal.is_valid() is True
+
+    proposal.name = '   mostly-valid-name'
+    assert proposal.is_valid() is False
+
+    proposal.name = 'also-mostly-valid-name   '
+    assert proposal.is_valid() is False
+
+    proposal.name = ' similarly-kinda-valid-name '
+    assert proposal.is_valid() is False
+
+    proposal.name = 'dean miller 5493'
+    assert proposal.is_valid() is False
+
+    proposal.name = 'dean-millerà-5493'
+    assert proposal.is_valid() is False
+
+    proposal.name = 'dean-миллер-5493'
+    assert proposal.is_valid() is False
     # binary gibberish
     proposal.name = absolutelib.deserialise('22385c7530303933375c75303363375c75303232395c75303138635c75303064335c75303163345c75303264385c75303236615c75303134625c75303163335c75303063335c75303362385c75303266615c75303261355c75303266652f2b5c75303065395c75303164655c75303136655c75303338645c75303062385c75303138635c75303064625c75303064315c75303038325c75303133325c753032333222')
     assert proposal.is_valid() is False
@@ -155,6 +176,14 @@ def test_proposal_is_valid(proposal):
 
     proposal.payment_address = 'yYe8KwyaUu5YswSYmB3q3ryx8XTUu9y7Ui'
     assert proposal.is_valid() is True
+    proposal.payment_address = ' yYe8KwyaUu5YswSYmB3q3ryx8XTUu9y7Ui'
+    assert proposal.is_valid() is False
+
+    proposal.payment_address = 'yYe8KwyaUu5YswSYmB3q3ryx8XTUu9y7Ui '
+    assert proposal.is_valid() is False
+
+    proposal.payment_address = ' yYe8KwyaUu5YswSYmB3q3ryx8XTUu9y7Ui '
+    assert proposal.is_valid() is False
 
     # reset
     proposal = Proposal(**orig.get_dict())
@@ -165,6 +194,29 @@ def test_proposal_is_valid(proposal):
 
     proposal.url = '    '
     assert proposal.is_valid() is False
+    proposal.url = 'http://bit.ly/1e1EYJv'
+    assert proposal.is_valid() is True
+
+    proposal.url = ' http://bit.ly/1e1EYJv'
+    assert proposal.is_valid() is False
+
+    proposal.url = 'http://bit.ly/1e1EYJv '
+    assert proposal.is_valid() is False
+
+    proposal.url = ' http://bit.ly/1e1EYJv '
+    assert proposal.is_valid() is False
+
+    proposal.url = 'http://::12.34.56.78]/'
+    assert proposal.is_valid() is False
+
+    proposal.url = 'http://[::1/foo/bad]/bad'
+    assert proposal.is_valid() is False
+
+    proposal.url = 'http://dashcentral.org/dean-miller 5493'
+    assert proposal.is_valid() is False
+
+    proposal.url = 'http://dashcentralisé.org/dean-miller-5493'
+    assert proposal.is_valid() is True
 
     proposal.url = 'http://bit.ly/1e1EYJv'
     assert proposal.is_valid() is True
@@ -223,16 +275,7 @@ def test_proposal_is_expired(proposal):
     assert proposal.is_expired(superblockcycle=cycle) is True
 
 
-def test_proposal_is_deletable(proposal):
-    now = misc.now()
-    assert proposal.is_deletable() is False
 
-    proposal.end_epoch = now - (86400 * 29)
-    assert proposal.is_deletable() is False
-
-    # add a couple seconds for time variance
-    proposal.end_epoch = now - ((86400 * 30) + 2)
-    assert proposal.is_deletable() is True
 
 
 # deterministic ordering
