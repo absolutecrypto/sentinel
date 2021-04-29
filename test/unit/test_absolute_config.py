@@ -80,5 +80,5 @@ txindex=1 # enable transaction index
     with tempfile.NamedTemporaryFile(mode='w') as temp:
         temp.write(absolute_config)
         temp.flush()
-        conf = DashConfig.slurp_config_file(temp.name)
+        conf = AbsoluteConfig.slurp_config_file(temp.name)
         assert conf == expected_stripped_config

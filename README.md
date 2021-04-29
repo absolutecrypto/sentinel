@@ -31,7 +31,7 @@ Update system packages and ensure virtualenv is installed:
     $ sudo apt-get update
     $ sudo apt-get -y install python-virtualenv
 
-Make sure the local DashCore daemon running is at least version 12.1 (120100)
+Make sure the local AbsoluteCore daemon running is at least version 12.1 (120100)
 
     $ absolute-cli getinfo | grep version
 
@@ -103,4 +103,4 @@ Specifically:
 
 ## License
 
-Released under the MIT license, under the same terms as DashCore itself. See [LICENSE](LICENSE) for more info.
+Released under the MIT license, under the same terms as AbsoluteCore itself. See [LICENSE](LICENSE) for more info.
