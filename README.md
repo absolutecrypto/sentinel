@@ -1,4 +1,4 @@
-# Absolute Sentinel V1.2
+# Absolute Sentinel V1.3
 
 An all-powerful toolset for Absolute.
 
