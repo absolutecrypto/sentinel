@@ -89,4 +89,5 @@ def get_db_conn():
 
 absolute_conf = get_absolute_conf()
 network = get_network()
+rpc_host = get_rpchost()
 db = get_db_conn()

@@ -213,17 +213,7 @@ def test_superblock_is_valid(superblock):
     assert superblock.is_valid() is True
 
 
-def test_superblock_is_deletable(superblock):
-    # now = misc.now()
-    # assert superblock.is_deletable() is False
 
-    # superblock.end_epoch = now - (86400 * 29)
-    # assert superblock.is_deletable() is False
-
-    # add a couple seconds for time variance
-    # superblock.end_epoch = now - ((86400 * 30) + 2)
-    # assert superblock.is_deletable() is True
-    pass
 
 
 def test_serialisable_fields():
@@ -246,7 +236,7 @@ def test_deterministic_superblock_creation(go_list_proposals):
 
     max_budget = 60
     prop_list = Proposal.approved_and_ranked(proposal_quorum=1, next_superblock_max_budget=max_budget)
-    sb = absolutelib.create_superblock(prop_list, 72000, budget_max=max_budget, sb_epoch_time=misc.now())
+    sb = absolutelib.create_superblock(prop_list, 72000, max_budget, misc.now())
 
     assert sb.event_block_height == 72000
     assert sb.payment_addresses == 'yYe8KwyaUu5YswSYmB3q3ryx8XTUu9y7Ui|yTC62huR4YQEPn9AJHjnQxxreHSbgAoatV'
