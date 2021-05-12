@@ -19,7 +19,7 @@ min_absoluted_proto_version_with_sentinel_ping = 70207
 
 def get_absolute_conf():
     if sys.platform == 'win32':
-        absolute_conf = os.path.join(os.getenv('APPDATA'), "\AbsoluteCore/absolute.conf")
+        absolute_conf = os.path.join(os.getenv('APPDATA'), "AbsoluteCore/absolute.conf")
     else:
         home = os.environ.get('HOME')
 

@@ -127,6 +127,10 @@ def main():
     absoluted = AbsoluteDaemon.from_absolute_conf(config.absolute_conf)
     options = process_args()
 
+    # print version and return if "--version" is an argument
+    if options.version:
+        print("Absolute Sentinel v%s" % config.sentinel_version)
+        return
     # check absoluted connectivity
     if not is_absoluted_port_open(absoluted):
         print("Cannot connect to absoluted. Please ensure absoluted is running and the JSONRPC port is open to Sentinel.")
@@ -206,6 +210,9 @@ def process_args():
                         action='store_true',
                         help='Bypass scheduler and sync/vote immediately',
                         dest='bypass')
+    parser.add_argument('-v', '--version',
+                        action='store_true',
+                        help='Print the version (Absolute Sentinel vX.X.X) and exit')
     args = parser.parse_args()
     
     return args
