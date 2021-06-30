@@ -33,13 +33,7 @@ def prune_expired_proposals(absoluted):
         proposal.vote(absoluted, VoteSignals.delete, VoteOutcomes.yes)
 
 
-# ping absoluted
-def sentinel_ping(absoluted):
-    printdbg("in sentinel_ping")
 
-    absoluted.ping()
-
-    printdbg("leaving sentinel_ping")
 
 
 def attempt_superblock_creation(absoluted):
@@ -176,8 +170,7 @@ def main():
     # load "gobject list" rpc command data, sync objects into internal database
     perform_absoluted_object_sync(absoluted)
 
-    if absoluted.has_sentinel_ping:
-        sentinel_ping(absoluted)
+
 
 
     # auto vote network objects as valid/invalid
