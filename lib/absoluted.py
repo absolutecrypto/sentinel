@@ -36,25 +36,20 @@ class AbsoluteDaemon():
         config_text = AbsoluteConfig.slurp_config_file(absolute_dot_conf)
         creds = AbsoluteConfig.get_rpc_creds(config_text, config.network)
 
+        creds[u'host'] = config.rpc_host
         return self(**creds)
 
     def rpc_command(self, *params):
         return self.rpc_connection.__getattr__(params[0])(*params[1:])
 
     # common RPC convenience methods
-    def is_testnet(self):
-        return self.rpc_command('getinfo')['testnet']
+
 
     def get_masternodes(self):
         mnlist = self.rpc_command('masternodelist', 'full')
         return [Masternode(k, v) for (k, v) in mnlist.items()]
 
-    def get_object_list(self):
-        try:
-            golist = self.rpc_command('gobject', 'list')
-        except JSONRPCException as e:
-            golist = self.rpc_command('mnbudget', 'show')
-        return golist
+
 
     def get_current_masternode_vin(self):
         from absolutelib import parse_masternode_status_vin
@@ -89,11 +84,7 @@ class AbsoluteDaemon():
     def superblockcycle(self):
         return self.govinfo['superblockcycle']
 
-    def governanceminquorum(self):
-        return self.govinfo['governanceminquorum']
 
-    def proposalfee(self):
-        return self.govinfo['proposalfee']
 
     def last_superblock_height(self):
         height = self.rpc_command('getblockcount')
@@ -108,11 +99,7 @@ class AbsoluteDaemon():
 
     def is_synced(self):
         mnsync_status = self.rpc_command('mnsync', 'status')
-        synced = (mnsync_status['IsBlockchainSynced'] and
-                  mnsync_status['IsMasternodeListSynced'] and
-                  mnsync_status['IsWinnersListSynced'] and
-                  mnsync_status['IsSynced'] and
-                  not mnsync_status['IsFailed'])
+        synced = (mnsync_status['IsSynced'] and not mnsync_status['IsFailed'])
         return synced
 
     def current_block_hash(self):
@@ -191,14 +178,7 @@ class AbsoluteDaemon():
 
         return (winner == my_vin)
 
-    @property
-    def MASTERNODE_WATCHDOG_MAX_SECONDS(self):
-        # note: self.govinfo is already memoized
-        return self.govinfo['masternodewatchdogmaxseconds']
 
-    @property
-    def SENTINEL_WATCHDOG_MAX_SECONDS(self):
-        return (self.MASTERNODE_WATCHDOG_MAX_SECONDS // 2)
 
     def estimate_block_time(self, height):
         import absolutelib
@@ -239,10 +219,4 @@ class AbsoluteDaemon():
 
         return epoch
 
-    @property
-    def has_sentinel_ping(self):
-        getinfo = self.rpc_command('getinfo')
-        return (getinfo['protocolversion'] >= config.min_absoluted_proto_version_with_sentinel_ping)
 
-    def ping(self):
-        self.rpc_command('sentinelping', config.sentinel_version)

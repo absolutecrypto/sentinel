@@ -6,7 +6,7 @@ import init
 import config
 import misc
 from absoluted import AbsoluteDaemon
-from models import Superblock, Proposal, GovernanceObject, Watchdog
+from models import Superblock, Proposal, GovernanceObject
 from models import VoteSignals, VoteOutcomes, Transient
 import socket
 from misc import printdbg
@@ -24,40 +24,7 @@ def perform_absoluted_object_sync(absoluted):
     GovernanceObject.sync(absoluted)
 
 
-# delete old watchdog objects, create new when necessary
-def watchdog_check(absoluted):
-    printdbg("in watchdog_check")
 
-    # delete expired watchdogs
-    for wd in Watchdog.expired(absoluted):
-        printdbg("\tFound expired watchdog [%s], voting to delete" % wd.object_hash)
-        wd.vote(absoluted, VoteSignals.delete, VoteOutcomes.yes)
-
-    # now, get all the active ones...
-    active_wd = Watchdog.active(absoluted)
-    active_count = active_wd.count()
-
-    # none exist, submit a new one to the network
-    if 0 == active_count:
-        # create/submit one
-        printdbg("\tNo watchdogs exist... submitting new one.")
-        wd = Watchdog(created_at=int(time.time()))
-        wd.submit(absoluted)
-
-    else:
-        wd_list = sorted(active_wd, key=lambda wd: wd.object_hash)
-
-        # highest hash wins
-        winner = wd_list.pop()
-        printdbg("\tFound winning watchdog [%s], voting VALID" % winner.object_hash)
-        winner.vote(absoluted, VoteSignals.valid, VoteOutcomes.yes)
-
-        # if remaining Watchdogs exist in the list, vote delete
-        for wd in wd_list:
-            printdbg("\tFound losing watchdog [%s], voting DELETE" % wd.object_hash)
-            wd.vote(absoluted, VoteSignals.delete, VoteOutcomes.yes)
-
-    printdbg("leaving watchdog_check")
 
 
 def prune_expired_proposals(absoluted):
@@ -66,13 +33,7 @@ def prune_expired_proposals(absoluted):
         proposal.vote(absoluted, VoteSignals.delete, VoteOutcomes.yes)
 
 
-# ping absoluted
-def sentinel_ping(absoluted):
-    printdbg("in sentinel_ping")
 
-    absoluted.ping()
-
-    printdbg("leaving sentinel_ping")
 
 
 def attempt_superblock_creation(absoluted):
@@ -160,6 +121,10 @@ def main():
     absoluted = AbsoluteDaemon.from_absolute_conf(config.absolute_conf)
     options = process_args()
 
+    # print version and return if "--version" is an argument
+    if options.version:
+        print("Absolute Sentinel v%s" % config.sentinel_version)
+        return
     # check absoluted connectivity
     if not is_absoluted_port_open(absoluted):
         print("Cannot connect to absoluted. Please ensure absoluted is running and the JSONRPC port is open to Sentinel.")
@@ -205,11 +170,8 @@ def main():
     # load "gobject list" rpc command data, sync objects into internal database
     perform_absoluted_object_sync(absoluted)
 
-    if absoluted.has_sentinel_ping:
-        sentinel_ping(absoluted)
-    else:
-        # delete old watchdog objects, create a new if necessary
-        watchdog_check(absoluted)
+
+
 
     # auto vote network objects as valid/invalid
     # check_object_validity(absoluted)
@@ -235,20 +197,27 @@ def cleanup():
 
 
 def process_args():
+    
     parser = argparse.ArgumentParser()
     parser.add_argument('-b', '--bypass-scheduler',
                         action='store_true',
                         help='Bypass scheduler and sync/vote immediately',
                         dest='bypass')
+    parser.add_argument('-v', '--version',
+                        action='store_true',
+                        help='Print the version (Absolute Sentinel vX.X.X) and exit')
     args = parser.parse_args()
-
+    
     return args
+
+
 
 
 if __name__ == '__main__':
     atexit.register(cleanup)
     signal.signal(signal.SIGINT, signal_handler)
 
+    
     # ensure another instance of Sentinel is not currently running
     mutex_key = 'SENTINEL_RUNNING'
     # assume that all processes expire after 'timeout_seconds' seconds
@@ -263,5 +232,6 @@ if __name__ == '__main__':
 
     # locked to this instance -- perform main logic here
     main()
+
 
     Transient.delete(mutex_key)
